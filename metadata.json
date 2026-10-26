@@ -1,0 +1,6 @@
+{
+  "name": "PLANT-X — Botanical Research & Early-Warning Platform",
+  "description": "AI botanical research dashboard predicting plant stress before visible symptoms appear via sensor telemetry and vision intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
