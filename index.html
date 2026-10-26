@@ -9,6 +9,14 @@
     <meta property="og:description" content="AI botanical research dashboard predicting plant stress before visible symptoms appear via sensor telemetry and vision intelligence." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Trailing slash normalization for GitHub Pages subpaths (e.g. /plantaix -> /plantaix/) -->
+    <script>
+      if (location.pathname && !location.pathname.endsWith('/') && !location.pathname.split('/').pop().includes('.')) {
+        location.replace(location.pathname + '/' + location.search + location.hash);
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
