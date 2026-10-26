@@ -18,14 +18,46 @@ const DEFAULT_SETTINGS: CalibrationSettings = {
   alertThresholdVPD: 1.6,
 };
 
+function safeSetItem(key: string, value: string): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  } catch (err) {
+    console.warn(`[PLANT-X Storage] setItem failed for "${key}":`, err);
+  }
+}
+
+function safeGetItem(key: string): string | null {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  } catch (err) {
+    console.warn(`[PLANT-X Storage] getItem failed for "${key}":`, err);
+    return null;
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key);
+    }
+  } catch (err) {
+    console.warn(`[PLANT-X Storage] removeItem failed for "${key}":`, err);
+  }
+}
+
 // --- Plants ---
 export function getPlants(): Plant[] {
+  const data = safeGetItem(STORAGE_KEYS.PLANTS);
+  if (!data) return [];
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.PLANTS);
-    if (!data) return [];
-    return JSON.parse(data);
-  } catch (err) {
-    console.error('Failed to read plants from localStorage:', err);
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
     return [];
   }
 }
@@ -38,26 +70,26 @@ export function savePlant(plant: Plant): void {
   } else {
     plants.unshift(plant);
   }
-  localStorage.setItem(STORAGE_KEYS.PLANTS, JSON.stringify(plants));
+  safeSetItem(STORAGE_KEYS.PLANTS, JSON.stringify(plants));
 }
 
 export function deletePlant(id: string): void {
   const plants = getPlants().filter(p => p.id !== id);
-  localStorage.setItem(STORAGE_KEYS.PLANTS, JSON.stringify(plants));
+  safeSetItem(STORAGE_KEYS.PLANTS, JSON.stringify(plants));
 }
 
 // --- Sensor Readings ---
 export function getSensorReadings(plantId?: string): SensorReading[] {
+  const data = safeGetItem(STORAGE_KEYS.SENSOR_READINGS);
+  if (!data) return [];
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.SENSOR_READINGS);
-    if (!data) return [];
-    const readings: SensorReading[] = JSON.parse(data);
+    const parsed = JSON.parse(data);
+    const readings: SensorReading[] = Array.isArray(parsed) ? parsed : [];
     if (plantId) {
       return readings.filter(r => r.plantId === plantId);
     }
     return readings;
-  } catch (err) {
-    console.error('Failed to read sensors from localStorage:', err);
+  } catch {
     return [];
   }
 }
@@ -72,7 +104,7 @@ export function addSensorReading(reading: Omit<SensorReading, 'id' | 'vpd'>): Se
 
   const readings = getSensorReadings();
   readings.unshift(newReading);
-  localStorage.setItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(readings));
+  safeSetItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(readings));
 
   // Recalculate and update the plant's current stress risk & health score based on latest reading
   const plants = getPlants();
@@ -96,21 +128,21 @@ export function addSensorReading(reading: Omit<SensorReading, 'id' | 'vpd'>): Se
 
 export function deleteSensorReading(id: string): void {
   const readings = getSensorReadings().filter(r => r.id !== id);
-  localStorage.setItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(readings));
+  safeSetItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(readings));
 }
 
 // --- Image Assessments ---
 export function getImageAssessments(plantId?: string): ImageAssessment[] {
+  const data = safeGetItem(STORAGE_KEYS.IMAGE_ASSESSMENTS);
+  if (!data) return [];
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.IMAGE_ASSESSMENTS);
-    if (!data) return [];
-    const assessments: ImageAssessment[] = JSON.parse(data);
+    const parsed = JSON.parse(data);
+    const assessments: ImageAssessment[] = Array.isArray(parsed) ? parsed : [];
     if (plantId) {
       return assessments.filter(a => a.plantId === plantId);
     }
     return assessments;
-  } catch (err) {
-    console.error('Failed to read image assessments from localStorage:', err);
+  } catch {
     return [];
   }
 }
@@ -118,7 +150,7 @@ export function getImageAssessments(plantId?: string): ImageAssessment[] {
 export function addImageAssessment(assessment: ImageAssessment): void {
   const assessments = getImageAssessments();
   assessments.unshift(assessment);
-  localStorage.setItem(STORAGE_KEYS.IMAGE_ASSESSMENTS, JSON.stringify(assessments));
+  safeSetItem(STORAGE_KEYS.IMAGE_ASSESSMENTS, JSON.stringify(assessments));
 
   // Update target plant with new assessment scores
   const plants = getPlants();
@@ -134,17 +166,17 @@ export function addImageAssessment(assessment: ImageAssessment): void {
 
 export function deleteImageAssessment(id: string): void {
   const assessments = getImageAssessments().filter(a => a.id !== id);
-  localStorage.setItem(STORAGE_KEYS.IMAGE_ASSESSMENTS, JSON.stringify(assessments));
+  safeSetItem(STORAGE_KEYS.IMAGE_ASSESSMENTS, JSON.stringify(assessments));
 }
 
 // --- Research Notes ---
 export function getResearchNotes(): ResearchNote[] {
+  const data = safeGetItem(STORAGE_KEYS.RESEARCH_NOTES);
+  if (!data) return [];
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.RESEARCH_NOTES);
-    if (!data) return [];
-    return JSON.parse(data);
-  } catch (err) {
-    console.error('Failed to read research notes:', err);
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
     return [];
   }
 }
@@ -157,15 +189,15 @@ export function addResearchNote(note: Omit<ResearchNote, 'id' | 'date'>): Resear
   };
   const notes = getResearchNotes();
   notes.unshift(newNote);
-  localStorage.setItem(STORAGE_KEYS.RESEARCH_NOTES, JSON.stringify(notes));
+  safeSetItem(STORAGE_KEYS.RESEARCH_NOTES, JSON.stringify(notes));
   return newNote;
 }
 
 // --- Calibration & Settings ---
 export function getCalibrationSettings(): CalibrationSettings {
+  const data = safeGetItem(STORAGE_KEYS.SETTINGS);
+  if (!data) return DEFAULT_SETTINGS;
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (!data) return DEFAULT_SETTINGS;
     return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
   } catch {
     return DEFAULT_SETTINGS;
@@ -173,7 +205,7 @@ export function getCalibrationSettings(): CalibrationSettings {
 }
 
 export function saveCalibrationSettings(settings: CalibrationSettings): void {
-  localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 }
 
 // --- Reference Dataset for Science Club Demonstration ---
@@ -243,7 +275,7 @@ export function loadReferenceDataset(): void {
     },
   ];
 
-  localStorage.setItem(STORAGE_KEYS.PLANTS, JSON.stringify(referencePlants));
+  safeSetItem(STORAGE_KEYS.PLANTS, JSON.stringify(referencePlants));
 
   // Generate realistic sensor telemetry over past 24 hours
   const referenceReadings: SensorReading[] = [];
@@ -279,7 +311,7 @@ export function loadReferenceDataset(): void {
     });
   }
 
-  localStorage.setItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(referenceReadings));
+  safeSetItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(referenceReadings));
 
   // Add initial research notes
   const initialNotes: ResearchNote[] = [
@@ -303,14 +335,14 @@ export function loadReferenceDataset(): void {
     },
   ];
 
-  localStorage.setItem(STORAGE_KEYS.RESEARCH_NOTES, JSON.stringify(initialNotes));
+  safeSetItem(STORAGE_KEYS.RESEARCH_NOTES, JSON.stringify(initialNotes));
 }
 
 export function clearAllData(): void {
-  localStorage.removeItem(STORAGE_KEYS.PLANTS);
-  localStorage.removeItem(STORAGE_KEYS.SENSOR_READINGS);
-  localStorage.removeItem(STORAGE_KEYS.IMAGE_ASSESSMENTS);
-  localStorage.removeItem(STORAGE_KEYS.RESEARCH_NOTES);
+  safeRemoveItem(STORAGE_KEYS.PLANTS);
+  safeRemoveItem(STORAGE_KEYS.SENSOR_READINGS);
+  safeRemoveItem(STORAGE_KEYS.IMAGE_ASSESSMENTS);
+  safeRemoveItem(STORAGE_KEYS.RESEARCH_NOTES);
 }
 
 export function exportAllDataJSON(): string {
@@ -330,11 +362,11 @@ export function exportAllDataJSON(): string {
 export function importAllDataJSON(jsonString: string): boolean {
   try {
     const payload = JSON.parse(jsonString);
-    if (payload.plants) localStorage.setItem(STORAGE_KEYS.PLANTS, JSON.stringify(payload.plants));
-    if (payload.sensorReadings) localStorage.setItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(payload.sensorReadings));
-    if (payload.imageAssessments) localStorage.setItem(STORAGE_KEYS.IMAGE_ASSESSMENTS, JSON.stringify(payload.imageAssessments));
-    if (payload.researchNotes) localStorage.setItem(STORAGE_KEYS.RESEARCH_NOTES, JSON.stringify(payload.researchNotes));
-    if (payload.settings) localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(payload.settings));
+    if (payload.plants && Array.isArray(payload.plants)) safeSetItem(STORAGE_KEYS.PLANTS, JSON.stringify(payload.plants));
+    if (payload.sensorReadings && Array.isArray(payload.sensorReadings)) safeSetItem(STORAGE_KEYS.SENSOR_READINGS, JSON.stringify(payload.sensorReadings));
+    if (payload.imageAssessments && Array.isArray(payload.imageAssessments)) safeSetItem(STORAGE_KEYS.IMAGE_ASSESSMENTS, JSON.stringify(payload.imageAssessments));
+    if (payload.researchNotes && Array.isArray(payload.researchNotes)) safeSetItem(STORAGE_KEYS.RESEARCH_NOTES, JSON.stringify(payload.researchNotes));
+    if (payload.settings) safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(payload.settings));
     return true;
   } catch (err) {
     console.error('Failed to parse imported JSON payload:', err);
